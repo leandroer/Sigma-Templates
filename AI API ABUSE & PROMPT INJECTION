@@ -1,0 +1,138 @@
+title: Excessive AI API Token Usage Detected
+id: a1b2c3d4-e5f6-4a5b-8c9d-1e2f3a4b5c6d
+status: experimental
+description: Detects unusually high token consumption in AI API calls that may indicate abuse or data exfiltration
+references:
+    - https://owasp.org/www-project-top-10-for-large-language-model-applications/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.exfiltration
+    - attack.t1567
+    - ai.abuse
+logsource:
+    product: azure
+    service: cognitiveservices
+detection:
+    selection:
+        ResourceType: 'COGNITIVESERVICES'
+        OperationName|contains:
+            - 'OpenAI'
+            - 'TextAnalytics'
+            - 'Language'
+    filter_tokens:
+        properties.total_tokens|gte: 100000
+    condition: selection and filter_tokens
+falsepositives:
+    - Legitimate bulk processing operations
+    - Automated batch jobs
+level: high
+
+-------------------------------------------
+title: AI Prompt Injection Attempt Detected
+id: b2c3d4e5-f6a7-4b5c-9d8e-2f3a4b5c6d7e
+status: experimental
+description: Detects attempts to inject malicious prompts or jailbreak AI systems
+references:
+    - https://www.robustintelligence.com/blog-posts/prompt-injection-attack-on-gpt-4
+    - https://learnprompting.org/docs/prompt_hacking/injection
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.initial_access
+    - attack.t1190
+    - ai.prompt_injection
+logsource:
+    product: azure
+    service: cognitiveservices
+detection:
+    selection:
+        ResourceType: 'COGNITIVESERVICES'
+        OperationName|contains:
+            - 'OpenAI'
+            - 'Completions'
+    keywords:
+        properties.prompt|contains:
+            - 'ignore previous instructions'
+            - 'ignore above'
+            - 'disregard previous'
+            - 'forget everything'
+            - 'system prompt'
+            - 'you are now'
+            - 'new instructions'
+            - 'roleplay as'
+            - 'pretend you are'
+            - 'act as if'
+            - 'DAN mode'
+            - 'developer mode'
+            - 'jailbreak'
+            - 'override'
+            - '<|im_start|>'
+            - '<|im_end|>'
+            - 'SUDO mode'
+    condition: selection and keywords
+falsepositives:
+    - Security testing with authorization
+    - Red team exercises
+level: high
+
+--------------------------------------------
+title: Repeated Failed AI API Authentication
+id: c3d4e5f6-a7b8-4c5d-9e8f-3a4b5c6d7e8f
+status: experimental
+description: Detects multiple failed authentication attempts to AI APIs indicating potential compromise
+references:
+    - https://owasp.org/www-community/attacks/Brute_force_attack
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.credential_access
+    - attack.t1110
+    - ai.authentication
+logsource:
+    product: azure
+    service: cognitiveservices
+detection:
+    selection:
+        ResourceType: 'COGNITIVESERVICES'
+        ResultType|ne: 'Success'
+    timeframe: 1h
+    condition: selection | count(CallerIPAddress) by identity_claims_appid_g > 10
+falsepositives:
+    - Misconfigured applications
+    - Development/testing activities
+level: medium
+
+------------------------------------
+title: AI Model Exfiltration Attempt
+id: d4e5f6a7-b8c9-4d5e-9f8a-4b5c6d7e8f9a
+status: experimental
+description: Detects attempts to download or export AI models
+references:
+    - https://github.com/OWASP/www-project-machine-learning-security-top-10
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.collection
+    - attack.t1213
+    - ai.model_theft
+logsource:
+    product: azure
+    service: cognitiveservices
+detection:
+    selection:
+        OperationName|contains:
+            - 'ModelDownload'
+            - 'ModelExport'
+            - 'GetModel'
+            - 'ListModels'
+    timeframe: 1h
+    condition: selection | count(CallerIPAddress) by identity_claims_upn_s > 5
+falsepositives:
+    - Legitimate model management operations
+    - Authorized model migration
+level: high
