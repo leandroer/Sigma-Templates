@@ -1,0 +1,89 @@
+title: Perplexity AI Excessive Query Volume
+id: 44b4c5d6-e7f8-4a9b-c0d1-2e3f4a5b6c7d
+status: experimental
+description: Detects unusually high query volume to Perplexity AI
+references:
+    - https://www.perplexity.ai/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.collection
+    - attack.t1213
+    - ai.perplexity
+    - ai.query_abuse
+logsource:
+    product: windows
+    category: network_connection
+detection:
+    selection:
+        DestinationHostname|contains:
+            - 'perplexity.ai'
+            - 'api.perplexity.ai'
+    timeframe: 1h
+    condition: selection | count(DestinationHostname) by User > 200
+falsepositives:
+    - Research activities
+    - Automated tools
+level: medium
+
+----------------------------------------------
+title: Perplexity AI Extended Research Session
+id: 55c5d6e7-f8a9-4b0c-d1e2-3f4a5b6c7d8e
+status: experimental
+description: Detects extended Perplexity AI sessions that may indicate data collection
+references:
+    - https://www.perplexity.ai/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.collection
+    - attack.t1213
+    - ai.perplexity
+    - ai.data_collection
+logsource:
+    product: windows
+    category: network_connection
+detection:
+    selection:
+        DestinationHostname|contains: 'perplexity.ai'
+    timeframe: 4h
+    filter_volume:
+        ReceivedBytes|gte: 104857600  # 100MB received
+    condition: selection and filter_volume
+falsepositives:
+    - Legitimate research projects
+    - Academic work
+level: medium
+
+-------------------------------------------
+title: Perplexity AI Corporate Data Leakage
+id: 66d6e7f8-a9b0-4c1d-e2f3-4a5b6c7d8e9f
+status: experimental
+description: Detects potential corporate data being sent to Perplexity AI
+references:
+    - https://www.perplexity.ai/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.exfiltration
+    - attack.t1567
+    - ai.perplexity
+    - ai.shadow_it
+logsource:
+    product: windows
+    category: network_connection
+detection:
+    selection:
+        DestinationHostname|contains:
+            - 'perplexity.ai'
+            - 'api.perplexity.ai'
+    filter_volume:
+        SentBytes|gte: 52428800  # 50MB
+    condition: selection and filter_volume
+falsepositives:
+    - Approved use cases
+    - Testing environments
+level: high
