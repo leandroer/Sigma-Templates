@@ -1,0 +1,93 @@
+title: Grok Excessive API Usage
+id: 11e1f2a3-b4c5-4d6e-f7a8-9b0c1d2e3f4a
+status: experimental
+description: Detects excessive usage of Grok AI API
+references:
+    - https://x.ai/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.exfiltration
+    - attack.t1567
+    - ai.grok
+    - ai.api_abuse
+logsource:
+    product: windows
+    category: network_connection
+detection:
+    selection:
+        DestinationHostname|contains:
+            - 'api.x.ai'
+            - 'grok.x.ai'
+    timeframe: 1h
+    condition: selection | count(DestinationHostname) by User > 500
+falsepositives:
+    - Approved automation scripts
+    - High-volume integrations
+level: medium
+
+-------------------------------------
+title: Grok Data Exfiltration via API
+id: 22f2a3b4-c5d6-4e7f-a8b9-0c1d2e3f4a5b
+status: experimental
+description: Detects large data transfers to Grok AI services
+references:
+    - https://x.ai/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.exfiltration
+    - attack.t1567
+    - ai.grok
+    - ai.data_leakage
+logsource:
+    product: windows
+    category: network_connection
+detection:
+    selection:
+        DestinationHostname|contains:
+            - 'api.x.ai'
+            - 'grok.x.ai'
+    filter_volume:
+        SentBytes|gte: 104857600  # 100MB
+    condition: selection and filter_volume
+falsepositives:
+    - Large document processing
+    - Batch operations
+level: high
+
+----------------------------------------
+title: Grok Unauthorized Access Attempts
+id: 33a3b4c5-d6e7-4f8a-b9c0-1d2e3f4a5b6c
+status: experimental
+description: Detects blocked or denied connection attempts to Grok services
+references:
+    - https://x.ai/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.credential_access
+    - attack.t1110
+    - ai.grok
+    - ai.unauthorized_access
+logsource:
+    product: firewall
+    category: network
+detection:
+    selection:
+        DestinationHostName|contains:
+            - 'api.x.ai'
+            - 'grok.x.ai'
+        Action:
+            - 'Denied'
+            - 'Blocked'
+            - 'Rejected'
+    timeframe: 1h
+    condition: selection | count(SourceIP) by DestinationHostName > 10
+falsepositives:
+    - Misconfigured firewalls
+    - Network policy changes
+level: medium
