@@ -1,0 +1,63 @@
+title: Unusual Azure ML Dataset Access Pattern
+id: f8a9b0c1-d2e3-4f5a-b9c8-8d9e0f1a2b3c
+status: experimental
+description: Detects abnormal patterns in ML dataset access that may indicate exfiltration
+references:
+    - https://docs.microsoft.com/en-us/azure/machine-learning/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.collection
+    - attack.t1530
+    - ai.dataset_exfiltration
+logsource:
+    product: azure
+    service: machinelearningservices
+detection:
+    selection:
+        ResourceType: 'MACHINELEARNINGSERVICES'
+        OperationName|contains:
+            - 'DatasetRead'
+            - 'DatasetDownload'
+            - 'DatastoreAccess'
+    timeframe: 1h
+    condition: selection | count(CallerIPAddress) by identity_claims_upn_s > 20
+falsepositives:
+    - Data science research activities
+    - Model training operations
+level: high
+
+------------------------------------------
+title: Bulk AI Model Prediction Extraction
+id: a9b0c1d2-e3f4-4a5b-c9d8-9e0f1a2b3c4d
+status: experimental
+description: Detects attempts to extract large numbers of predictions possibly to recreate models
+references:
+    - https://github.com/OWASP/www-project-machine-learning-security-top-10
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.collection
+    - attack.t1213
+    - ai.model_stealing
+logsource:
+    product: azure
+    service: cognitiveservices
+detection:
+    selection:
+        ResourceType:
+            - 'COGNITIVESERVICES'
+            - 'MACHINELEARNINGSERVICES'
+        OperationName|contains:
+            - 'Predict'
+            - 'Score'
+            - 'Inference'
+            - 'Completion'
+    timeframe: 5m
+    condition: selection | count(CallerIPAddress) by identity_claims_appid_g > 1000
+falsepositives:
+    - High-traffic production services
+    - Batch processing jobs
+level: high
