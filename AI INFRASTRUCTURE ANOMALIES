@@ -1,0 +1,126 @@
+title: Anomalous GPU Compute Usage
+id: e1f2a3b4-c5d6-4e5f-a9b8-1c2d3e4f5a6b
+status: experimental
+description: Detects sustained high GPU usage that may indicate cryptomining or abuse
+references:
+    - https://www.trendmicro.com/vinfo/us/security/news/cybercrime-and-digital-threats/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.impact
+    - attack.t1496
+    - ai.resource_abuse
+logsource:
+    product: azure
+    service: machinelearningservices
+detection:
+    selection:
+        ResourceType: 
+            - 'MACHINELEARNINGSERVICES'
+            - 'VIRTUALMACHINES'
+        Category: 'ComputeMetrics'
+    filter_utilization:
+        properties.gpuUtilization|gte: 90
+    timeframe: 4h
+    condition: selection and filter_utilization
+falsepositives:
+    - Legitimate ML training workloads
+    - Deep learning experiments
+level: medium
+
+---------------------------------------
+title: Unauthorized ML Model Deployment
+id: f2a3b4c5-d6e7-4f5a-b9c8-2d3e4f5a6b7c
+status: experimental
+description: Detects potentially unauthorized model deployments to endpoints
+references:
+    - https://docs.microsoft.com/en-us/azure/machine-learning/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.persistence
+    - attack.t1505
+    - ai.unauthorized_deployment
+logsource:
+    product: azure
+    service: machinelearningservices
+detection:
+    selection:
+        ResourceType: 'MACHINELEARNINGSERVICES'
+        OperationName|contains:
+            - 'DeployModel'
+            - 'CreateEndpoint'
+            - 'UpdateEndpoint'
+    condition: selection
+falsepositives:
+    - Legitimate MLOps operations
+    - Scheduled deployments
+level: medium
+
+-------------------------------------------------
+title: Suspicious AI Service Configuration Change
+id: a3b4c5d6-e7f8-4a5b-c9d8-3e4f5a6b7c8d
+status: experimental
+description: Detects potentially malicious changes to AI service configurations
+references:
+    - https://docs.microsoft.com/en-us/azure/cognitive-services/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.defense_evasion
+    - attack.t1562
+    - ai.config_tampering
+logsource:
+    product: azure
+    service: cognitiveservices
+detection:
+    selection:
+        ResourceType:
+            - 'COGNITIVESERVICES'
+            - 'MACHINELEARNINGSERVICES'
+        OperationName|contains:
+            - 'Write'
+            - 'Update'
+            - 'Delete'
+            - 'CreateOrUpdate'
+    filter_read:
+        OperationName|contains: 'Read'
+    condition: selection and not filter_read
+falsepositives:
+    - Legitimate administrative changes
+    - Infrastructure as Code deployments
+level: medium
+
+------------------------------------------------
+title: High-Frequency Jupyter Notebook Execution
+id: b4c5d6e7-f8a9-4b5c-d9e8-4f5a6b7c8d9e
+status: experimental
+description: Detects abnormally high notebook execution frequency
+references:
+    - https://jupyter.org/security
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.execution
+    - attack.t1059
+    - ai.notebook_abuse
+logsource:
+    product: azure
+    service: machinelearningservices
+detection:
+    selection:
+        ResourceType: 'MACHINELEARNINGSERVICES'
+        OperationName|contains:
+            - 'NotebookExecution'
+            - 'NotebookRun'
+            - 'KernelStart'
+    timeframe: 1h
+    condition: selection | count(CallerIPAddress) by identity_claims_upn_s > 50
+falsepositives:
+    - Automated notebook workflows
+    - CI/CD pipelines
+level: medium
