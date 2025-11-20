@@ -1,0 +1,169 @@
+title: AWS Bedrock Excessive Model Invocations
+id: 66f6a7b8-c9d0-4e1f-a2b3-4c5d6e7f8a9b
+status: experimental
+description: Detects unusually high AWS Bedrock model invocation volume
+references:
+    - https://docs.aws.amazon.com/bedrock/latest/userguide/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.exfiltration
+    - attack.t1567
+    - ai.aws_bedrock
+    - ai.api_abuse
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: 'bedrock.amazonaws.com'
+        eventName:
+            - 'InvokeModel'
+            - 'InvokeModelWithResponseStream'
+    timeframe: 1h
+    condition: selection | count(sourceIPAddress) by userIdentity.arn > 500
+falsepositives:
+    - High-traffic production applications
+    - Batch processing jobs
+level: high
+
+---------------------------------------------
+title: AWS Bedrock Prompt Injection Detection
+id: 77a7b8c9-d0e1-4f2a-b3c4-5d6e7f8a9b0c
+status: experimental
+description: Detects prompt injection attempts in AWS Bedrock model invocations
+references:
+    - https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.initial_access
+    - attack.t1190
+    - ai.aws_bedrock
+    - ai.prompt_injection
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: 'bedrock.amazonaws.com'
+        eventName:
+            - 'InvokeModel'
+            - 'InvokeModelWithResponseStream'
+    keywords:
+        requestParameters.body|contains:
+            - 'ignore previous'
+            - 'disregard'
+            - 'forget instructions'
+            - 'system prompt'
+            - 'jailbreak'
+            - 'DAN mode'
+            - 'unrestricted'
+            - '\\n\\nHuman:'
+            - '\\n\\nAssistant:'
+            - 'override'
+            - 'bypass'
+    condition: selection and keywords
+falsepositives:
+    - Security testing with authorization
+    - Red team activities
+level: high
+
+---------------------------------------------
+title: AWS Bedrock Custom Model Theft Attempt
+id: 88b8c9d0-e1f2-4a3b-c4d5-6e7f8a9b0c1d
+status: experimental
+description: Detects attempts to access or export custom AWS Bedrock models
+references:
+    - https://docs.aws.amazon.com/bedrock/latest/userguide/custom-models.html
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.collection
+    - attack.t1213
+    - ai.aws_bedrock
+    - ai.model_theft
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: 'bedrock.amazonaws.com'
+        eventName:
+            - 'GetCustomModel'
+            - 'ListCustomModels'
+            - 'GetModelInvocationLoggingConfiguration'
+    timeframe: 1h
+    condition: selection | count(sourceIPAddress) by userIdentity.arn > 10
+falsepositives:
+    - Legitimate model management
+    - MLOps automation
+level: high
+
+------------------------------------------
+title: AWS Bedrock Guardrail Bypass Attempt
+id: 99c9d0e1-f2a3-4b4c-d5e6-7f8a9b0c1d2e
+status: experimental
+description: Detects attempts to disable or modify AWS Bedrock guardrails
+references:
+    - https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.defense_evasion
+    - attack.t1562
+    - ai.aws_bedrock
+    - ai.guardrail_bypass
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: 'bedrock.amazonaws.com'
+        eventName|contains: 'Guardrail'
+        requestParameters.action:
+            - 'Delete'
+            - 'Update'
+            - 'Disable'
+    condition: selection
+falsepositives:
+    - Authorized configuration changes
+    - Security policy updates
+level: high
+
+-------------------------------------------
+title: AWS Bedrock Unauthorized Model Access
+id: 00d0e1f2-a3b4-4c5d-e6f7-8a9b0c1d2e3f
+status: experimental
+description: Detects repeated failed attempts to access AWS Bedrock models
+references:
+    - https://docs.aws.amazon.com/bedrock/latest/userguide/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.discovery
+    - attack.t1087
+    - ai.aws_bedrock
+    - ai.unauthorized_access
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: 'bedrock.amazonaws.com'
+        eventName:
+            - 'GetFoundationModel'
+            - 'ListFoundationModels'
+            - 'GetCustomModel'
+        errorCode: '*'
+    timeframe: 1h
+    condition: selection | count(sourceIPAddress) by userIdentity.arn > 5
+falsepositives:
+    - Misconfigured applications
+    - Development testing
+level: medium
