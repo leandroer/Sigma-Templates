@@ -1,0 +1,109 @@
+title: Mass AI Training Data Download
+id: e5f6a7b8-c9d0-4e5f-a9b8-5c6d7e8f9a0b
+status: experimental
+description: Detects bulk downloads of AI training datasets
+references:
+    - https://www.microsoft.com/en-us/security/blog/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.collection
+    - attack.t1530
+    - ai.data_exfiltration
+logsource:
+    product: azure
+    service: machinelearningservices
+detection:
+    selection:
+        ResourceType: 'MACHINELEARNINGSERVICES'
+        OperationName|contains:
+            - 'BlobDownload'
+            - 'DatasetDownload'
+            - 'GetBlob'
+    filter_volume:
+        properties.responseSize|gte: 1073741824  # 1GB
+    condition: selection and filter_volume
+falsepositives:
+    - Legitimate data science operations
+    - Scheduled backup jobs
+level: high
+
+--------------------------------------
+title: After-Hours AI Workspace Access
+id: f6a7b8c9-d0e1-4f5a-b9c8-6d7e8f9a0b1c
+status: experimental
+description: Detects access to AI workspaces outside normal business hours
+references:
+    - https://docs.microsoft.com/en-us/azure/machine-learning/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.initial_access
+    - attack.t1078
+    - ai.anomalous_access
+logsource:
+    product: azure
+    service: machinelearningservices
+detection:
+    selection:
+        ResourceType: 'MACHINELEARNINGSERVICES'
+        OperationName|contains:
+            - 'WorkspaceAccess'
+            - 'NotebookAccess'
+            - 'ComputeAccess'
+    time_filter:
+        TimeGenerated|hour: 
+            - 0
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 18
+            - 19
+            - 20
+            - 21
+            - 22
+            - 23
+    condition: selection and time_filter
+falsepositives:
+    - Legitimate after-hours work
+    - Global teams in different time zones
+level: medium
+
+------------------------------------------
+title: Potential AI Model Poisoning Attack
+id: a7b8c9d0-e1f2-4a5b-c9d8-7e8f9a0b1c2d
+status: experimental
+description: Detects suspicious training job submissions that may indicate model poisoning
+references:
+    - https://arxiv.org/abs/2004.10544
+    - https://github.com/OWASP/www-project-machine-learning-security-top-10
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.impact
+    - attack.t1565
+    - ai.model_poisoning
+logsource:
+    product: azure
+    service: machinelearningservices
+detection:
+    selection:
+        ResourceType: 'MACHINELEARNINGSERVICES'
+        OperationName|contains:
+            - 'TrainingJobSubmit'
+            - 'DatasetUpdate'
+            - 'DatasetCreate'
+            - 'ModelRegister'
+    timeframe: 1h
+    condition: selection | count(CallerIPAddress) by identity_claims_upn_s > 10
+falsepositives:
+    - Automated ML pipelines
+    - Hyperparameter tuning jobs
+level: high
