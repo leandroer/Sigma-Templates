@@ -1,0 +1,93 @@
+title: Excessive Microsoft 365 Copilot Usage
+id: b8c9d0e1-f2a3-4b5c-d9e8-8f9a0b1c2d3e
+status: experimental
+description: Detects abnormally high Microsoft 365 Copilot activity that may indicate abuse
+references:
+    - https://learn.microsoft.com/en-us/microsoft-365-copilot/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.collection
+    - attack.t1213
+    - ai.copilot_abuse
+logsource:
+    product: office365
+    service: general
+detection:
+    selection:
+        Operation|contains: 'Copilot'
+        ClientAppId|contains: 'Microsoft 365 Copilot'
+    timeframe: 1h
+    condition: selection | count(UserId) by ClientIP > 100
+falsepositives:
+    - Power users with legitimate high usage
+    - Automated testing
+level: medium
+
+---------------------------------------
+title: GitHub Copilot Data Exfiltration
+id: c9d0e1f2-a3b4-4c5d-e9f8-9a0b1c2d3e4f
+status: experimental
+description: Detects large data transfers to GitHub Copilot services
+references:
+    - https://github.com/features/copilot
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.exfiltration
+    - attack.t1567
+    - ai.copilot_exfiltration
+logsource:
+    product: windows
+    category: network_connection
+detection:
+    selection:
+        DestinationHostname|contains:
+            - 'copilot-proxy.githubusercontent.com'
+            - 'api.github.com'
+            - 'copilot.github.com'
+    filter_volume:
+        SentBytes|gte: 10485760  # 10MB
+    condition: selection and filter_volume
+falsepositives:
+    - Large project synchronization
+    - Legitimate bulk code operations
+level: high
+
+-------------------------------------------------------
+title: External AI Service Usage from Corporate Network
+id: d0e1f2a3-b4c5-4d5e-f9a8-0b1c2d3e4f5a
+status: experimental
+description: Detects usage of external AI services that may lead to data leakage
+references:
+    - https://www.microsoft.com/en-us/security/blog/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.exfiltration
+    - attack.t1567.002
+    - ai.shadow_it
+logsource:
+    product: windows
+    category: network_connection
+detection:
+    selection:
+        DestinationHostname|contains:
+            - 'chat.openai.com'
+            - 'chatgpt.com'
+            - 'api.openai.com'
+            - 'claude.ai'
+            - 'anthropic.com'
+            - 'bard.google.com'
+            - 'gemini.google.com'
+            - 'api.cohere.ai'
+    filter_volume:
+        SentBytes|gte: 5242880  # 5MB
+    condition: selection and filter_volume
+falsepositives:
+    - Approved AI tool usage
+    - Research and development activities
+level: high
