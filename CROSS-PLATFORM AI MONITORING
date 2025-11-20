@@ -1,0 +1,119 @@
+title: Multi-Platform AI Service Usage
+id: 22d2e3f4-a5b6-4c7d-e8f9-0a1b2c3d4e5f
+status: experimental
+description: Detects usage of multiple AI platforms by same user indicating shadow IT
+references:
+    - https://www.microsoft.com/en-us/security/blog/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.exfiltration
+    - attack.t1567
+    - ai.multi_platform
+    - ai.shadow_it
+logsource:
+    product: windows
+    category: network_connection
+detection:
+    selection:
+        DestinationHostname|contains:
+            - 'api.openai.com'
+            - 'openai.azure.com'
+            - 'api.anthropic.com'
+            - 'claude.ai'
+            - 'bedrock.amazonaws.com'
+            - 'api.x.ai'
+            - 'grok.x.ai'
+            - 'perplexity.ai'
+            - 'api.cohere.ai'
+    timeframe: 24h
+    condition: selection | count(distinct DestinationHostname) by User > 3
+falsepositives:
+    - AI researchers
+    - Developers testing multiple platforms
+level: medium
+
+-----------------------------------
+title: After-Hours AI Service Usage
+id: 33e3f4a5-b6c7-4d8e-f9a0-1b2c3d4e5f6a
+status: experimental
+description: Detects AI service usage outside business hours
+references:
+    - https://www.microsoft.com/en-us/security/blog/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.exfiltration
+    - attack.t1567
+    - ai.anomalous_time
+    - ai.after_hours
+logsource:
+    product: windows
+    category: network_connection
+detection:
+    selection:
+        DestinationHostname|contains:
+            - 'api.openai.com'
+            - 'api.anthropic.com'
+            - 'claude.ai'
+            - 'bedrock.amazonaws.com'
+            - 'api.x.ai'
+            - 'perplexity.ai'
+    time_filter:
+        TimeGenerated|hour:
+            - 0
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 18
+            - 19
+            - 20
+            - 21
+            - 22
+            - 23
+    timeframe: 1h
+    condition: selection and time_filter | count(DestinationHostname) by User > 50
+falsepositives:
+    - Global teams
+    - Legitimate after-hours work
+    - Different time zones
+level: medium
+
+-----------------------------------------------------------
+title: Suspicious AI API Pattern - Rapid Platform Switching
+id: 44f4a5b6-c7d8-4e9f-a0b1-2c3d4e5f6a7b
+status: experimental
+description: Detects rapid switching between AI platforms which may indicate malicious testing
+references:
+    - https://owasp.org/www-project-machine-learning-security-top-10/
+author: Security Operations Team
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+    - attack.reconnaissance
+    - attack.t1595
+    - ai.platform_hopping
+    - ai.reconnaissance
+logsource:
+    product: windows
+    category: network_connection
+detection:
+    selection:
+        DestinationHostname|contains:
+            - 'api.openai.com'
+            - 'api.anthropic.com'
+            - 'bedrock.amazonaws.com'
+            - 'api.x.ai'
+            - 'perplexity.ai'
+    timeframe: 15m
+    condition: selection | count(distinct DestinationHostname) by User > 3
+falsepositives:
+    - Platform comparison testing
+    - Development activities
+level: low
